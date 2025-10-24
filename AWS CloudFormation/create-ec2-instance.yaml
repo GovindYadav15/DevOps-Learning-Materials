@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation Template to create a simple EC2 Instance"
+
+Resources:
+  GovindInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-04c08fd8aa14af291 # Amazon Linux Machine Image
+      InstanceType: t2.micro
+      KeyName: secretkey              # already existing key pair
+      SecurityGroups:
+        - !Ref MySecurityGroup
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0

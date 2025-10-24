@@ -1,5 +1,5 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: "Create a simple S3 bucket using CloudFormation template"
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create a simple S3 bucket using CloudFormation template
 
 Resources:
   MyFirstS3Bucket:
