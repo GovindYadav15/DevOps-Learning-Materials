@@ -1,5 +1,4 @@
 import express from "express";
-import dbConnection from "./src/config/db.js";
 import "dotenv/config";
 import userRouter from "./src/routes/userRoute.js";
 import categoryRouter from "./src/routes/categoryRoutes.js";
@@ -14,8 +13,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("src/uploads")); // Serve static files from 'uploads' directory
 
-// connection to database
-dbConnection();
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // user routes
 app.use("/api/auth", userRouter);
