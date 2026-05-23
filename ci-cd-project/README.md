@@ -94,6 +94,23 @@ erDiagram
 
 - [https://tagify.onrender.com](https://tagify.onrender.com)
 
+## CI/CD
+
+This project includes a GitHub Actions workflow that runs on changes to `ci-cd-project`:
+
+- Installs Node.js dependencies with `npm ci`
+- Runs syntax checks with `npm run check`
+- Runs smoke tests with `npm test`
+- Builds the production Docker image
+
+Local verification:
+
+```bash
+npm run check
+npm test
+docker build -t tagify:local .
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
