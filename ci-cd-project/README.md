@@ -101,7 +101,8 @@ This project includes a GitHub Actions workflow that runs on changes to `ci-cd-p
 - Installs Node.js dependencies with `npm ci`
 - Runs syntax checks with `npm run check`
 - Runs smoke tests with `npm test`
-- Builds the production Docker image
+- Builds and pushes the production Docker image to Amazon ECR
+- Deploys the new image to AWS EC2 using a blue/green container switch behind Nginx
 
 Local verification:
 
@@ -110,6 +111,58 @@ npm run check
 npm test
 docker build -t tagify:local .
 ```
+
+### AWS Deployment
+
+The EC2 deployment uses:
+
+- Amazon ECR for Docker image storage
+- EC2 for application runtime
+- Nginx as a reverse proxy on port `80`
+- Blue/green containers on `127.0.0.1:4001` and `127.0.0.1:4002`
+
+Prepare a new EC2 host:
+
+```bash
+sudo APP_USER=ec2-user bash scripts/setup-ec2.sh
+```
+
+Required GitHub Actions configuration:
+
+- Repository variables: `AWS_REGION`, `ECR_REPOSITORY`
+- Repository secrets: `AWS_ROLE_TO_ASSUME`, `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `DB_URL`, `JWT_SECRET`
+
+The EC2 instance also needs permission to pull from ECR. Attach an IAM role with ECR read access, or provide equivalent AWS credentials on the instance.
+
+### AWS Infrastructure Provisioning
+
+You can provision the base AWS resources with the AWS CLI helper:
+
+```bash
+AWS_REGION=us-east-1 \
+APP_NAME=tagify \
+VPC_ID=vpc-xxxxxxxx \
+SUBNET_ID=subnet-xxxxxxxx \
+KEY_NAME=your-key-pair \
+SSH_CIDR=x.x.x.x/32 \
+bash scripts/provision-aws.sh
+```
+
+The script creates or reuses:
+
+- Amazon ECR repository
+- IAM role and EC2 instance profile with ECR pull and CloudWatch write permissions
+- Security group with SSH and HTTP access
+- EC2 instance tagged for this project
+
+### Monitoring and Logging
+
+`scripts/setup-ec2.sh` installs and configures the CloudWatch Agent. It publishes:
+
+- Nginx access logs to `/tagify/nginx/access`
+- Nginx error logs to `/tagify/nginx/error`
+- Deployment logs to `/tagify/deploy`
+- CPU, memory, and disk utilization metrics
 
 ## License
 
