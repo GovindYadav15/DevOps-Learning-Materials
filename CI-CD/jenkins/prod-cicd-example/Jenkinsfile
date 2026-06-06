@@ -16,7 +16,8 @@ pipeline {
 
         stage('Checkout Source') {
             steps {
-                git 'https://github.com/GovindYadav15/Tagify.git'
+                git branch: 'main',
+                    url: 'https://github.com/GovindYadav15/Tagify.git'
             }
         }
 
@@ -59,12 +60,12 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh '''
-                docker rm -f $CONTAINER_NAME || true
+                    docker rm -f $CONTAINER_NAME || true
 
-                docker run -d \
-                    --name $CONTAINER_NAME \
-                    -p 3000:3000 \
-                    $IMAGE_NAME
+                    docker run -d \
+                        --name $CONTAINER_NAME \
+                        -p 4000:4000 \
+                        $IMAGE_NAME
                 '''
             }
         }
@@ -72,15 +73,14 @@ pipeline {
         stage('Health Check') {
             steps {
                 sh '''
-                sleep 15
-                curl -f http://localhost:3000 || exit 1
+                    sleep 15
+                    curl -f http://localhost:4000 || exit 1
                 '''
             }
         }
     }
 
     post {
-
         success {
             echo 'Application successfully deployed.'
         }
