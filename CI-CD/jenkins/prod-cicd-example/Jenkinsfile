@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = "tagify"
+        IMAGE_NAME = "tagify:latest"
+        CONTAINER_NAME = "tagify-container"
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+
+        stage('Checkout Source') {
+            steps {
+                git 'https://github.com/GovindYadav15/Tagify.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Lint Code') {
+            steps {
+                sh 'npm run lint || true'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'npm test || true'
+            }
+        }
+
+        stage('Build Application') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image $IMAGE_NAME || true'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                docker rm -f $CONTAINER_NAME || true
+
+                docker run -d \
+                    --name $CONTAINER_NAME \
+                    -p 3000:3000 \
+                    $IMAGE_NAME
+                '''
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                sleep 15
+                curl -f http://localhost:3000 || exit 1
+                '''
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'Application successfully deployed.'
+        }
+
+        failure {
+            echo 'Pipeline failed.'
+        }
+
+        always {
+            sh 'docker image prune -f || true'
+            echo 'Cleanup completed.'
+        }
+    }
+}
