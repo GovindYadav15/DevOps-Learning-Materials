@@ -1,0 +1,25 @@
+{
+  "name": "jenkins-webhook-node-app",
+  "version": "1.0.0",
+  "description": "Simple Node.js app deployed by Jenkins when a Git webhook is triggered.",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "nodejs",
+    "jenkins",
+    "webhook",
+    "docker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

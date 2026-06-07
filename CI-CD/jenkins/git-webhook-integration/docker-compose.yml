@@ -1,0 +1,11 @@
+services:
+  node-app:
+    build: .
+    image: jenkins-webhook-node-app:latest
+    container_name: jenkins-webhook-node-app
+    ports:
+      - "3000:3000"
+    environment:
+      APP_NAME: jenkins-webhook-node-app
+      PORT: 3000
+    restart: unless-stopped

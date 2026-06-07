@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush()
+    }
+
+    environment {
+        APP_DIR = "CI-CD/jenkins/git-webhook-integration"
+        IMAGE_NAME = "jenkins-webhook-node-app:latest"
+        CONTAINER_NAME = "jenkins-webhook-node-app"
+        APP_PORT = "3000"
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'npm test'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'docker build -t $IMAGE_NAME .'
+                }
+            }
+        }
+
+        stage('Deploy To Local Server') {
+            steps {
+                sh '''
+                docker rm -f $CONTAINER_NAME || true
+
+                docker run -d \
+                    --name $CONTAINER_NAME \
+                    --restart unless-stopped \
+                    -p $APP_PORT:3000 \
+                    -e APP_NAME=jenkins-webhook-node-app \
+                    $IMAGE_NAME
+                '''
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                sh '''
+                sleep 5
+                curl -f http://localhost:$APP_PORT/health
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Application deployed successfully after Git webhook trigger.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Check the console output.'
+        }
+
+        always {
+            sh 'docker image prune -f || true'
+        }
+    }
+}
